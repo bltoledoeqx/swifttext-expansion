@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function SiteHeader() {
   return (
@@ -17,15 +18,15 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#snippets" className="hover:text-foreground transition-colors">Snippets</a>
+          <Link to="/plugin" className="hover:text-foreground transition-colors">Interface</Link>
         </nav>
 
-        <a
-          href="#cta"
+        <Link
+          to="/plugin"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
-          Add to browser
-        </a>
+          Ver plugin
+        </Link>
       </div>
     </header>
   );
