@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PluginRouteImport } from './routes/plugin'
+import { Route as PopupRouteImport } from './routes/popup'
 import { Route as IndexRouteImport } from './routes/index'
 
-const PluginRoute = PluginRouteImport.update({
-  id: '/plugin',
-  path: '/plugin',
+const PopupRoute = PopupRouteImport.update({
+  id: '/popup',
+  path: '/popup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +25,37 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/plugin': typeof PluginRoute
+  '/popup': typeof PopupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/plugin': typeof PluginRoute
+  '/popup': typeof PopupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/plugin': typeof PluginRoute
+  '/popup': typeof PopupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/plugin'
+  fullPaths: '/' | '/popup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/plugin'
-  id: '__root__' | '/' | '/plugin'
+  to: '/' | '/popup'
+  id: '__root__' | '/' | '/popup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PluginRoute: typeof PluginRoute
+  PopupRoute: typeof PopupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/plugin': {
-      id: '/plugin'
-      path: '/plugin'
-      fullPath: '/plugin'
-      preLoaderRoute: typeof PluginRouteImport
+    '/popup': {
+      id: '/popup'
+      path: '/popup'
+      fullPath: '/popup'
+      preLoaderRoute: typeof PopupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PluginRoute: PluginRoute,
+  PopupRoute: PopupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
