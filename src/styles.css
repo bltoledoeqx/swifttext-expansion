@@ -40,13 +40,21 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --shadow-glow: 0 0 60px -10px color-mix(in oklab, var(--primary) 50%, transparent);
+  --shadow-glow: 0 0 80px -10px color-mix(in oklab, var(--primary) 55%, transparent);
   --shadow-soft: 0 10px 40px -15px oklch(0 0 0 / 0.5);
-  --shadow-elevated: 0 20px 60px -20px oklch(0 0 0 / 0.6);
+  --shadow-elevated:
+    0 1px 0 0 color-mix(in oklab, white 6%, transparent) inset,
+    0 0 0 1px color-mix(in oklab, white 3%, transparent),
+    0 30px 80px -20px oklch(0 0 0 / 0.7),
+    0 12px 30px -12px oklch(0 0 0 / 0.5);
+  --shadow-inset-hi: inset 0 1px 0 0 color-mix(in oklab, white 8%, transparent);
 
   --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%);
-  --gradient-radial: radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--primary) 20%, transparent), transparent 60%);
+  --gradient-radial: radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 60%);
   --gradient-text: linear-gradient(180deg, var(--foreground) 0%, color-mix(in oklab, var(--foreground) 60%, transparent) 100%);
+  --gradient-surface: linear-gradient(180deg, color-mix(in oklab, var(--surface-elevated) 100%, transparent) 0%, color-mix(in oklab, var(--surface) 100%, transparent) 100%);
+  --gradient-card: linear-gradient(180deg, color-mix(in oklab, white 4%, var(--surface)) 0%, var(--surface) 100%);
+  --gradient-border: linear-gradient(180deg, color-mix(in oklab, white 12%, transparent), color-mix(in oklab, white 2%, transparent));
 
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
