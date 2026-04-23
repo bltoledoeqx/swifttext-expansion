@@ -109,11 +109,11 @@ async function resolveVars(text) {
     .replace(/\bBom dia\b|\bBoa tarde\b|\bBoa noite\b/i, greeting);
 
   return normalizedGreetingText
-    .replace(/\{\{datetime\}\}/g, dateTimeNow)
-    .replace(/\{\{date\}\}/g, greeting)
-    .replace(/\{\{user\}\}/g, userValue)
-    .replace(/\{\{ticket\}\}/g, ticketValue)
-    .replace(/\{\{sev\}\}/g, "P3");
+    .replace(/\{\{datetime\}\}/gi, dateTimeNow)
+    .replace(/\{\{date\}\}/gi, greeting)
+    .replace(/\{\{user\}\}/gi, userValue)
+    .replace(/\{\{ticket\}\}/gi, ticketValue)
+    .replace(/\{\{sev\}\}/gi, "P3");
 }
 
 async function insertAtCursor(el, text) {
