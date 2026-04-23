@@ -91,7 +91,7 @@ function getServiceNowUserFromDom() {
 
 async function resolveVars(text) {
   const nowDate = new Date();
-  const now = nowDate.toLocaleString("pt-BR");
+  const dateTimeNow = nowDate.toLocaleString("pt-BR");
   const hour = nowDate.getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const onServiceNow = isServiceNowPage();
@@ -109,7 +109,8 @@ async function resolveVars(text) {
     .replace(/\bBom dia\b|\bBoa tarde\b|\bBoa noite\b/i, greeting);
 
   return normalizedGreetingText
-    .replace(/\{\{date\}\}/g, now)
+    .replace(/\{\{datetime\}\}/g, dateTimeNow)
+    .replace(/\{\{date\}\}/g, greeting)
     .replace(/\{\{user\}\}/g, userValue)
     .replace(/\{\{ticket\}\}/g, ticketValue)
     .replace(/\{\{sev\}\}/g, "P3");
