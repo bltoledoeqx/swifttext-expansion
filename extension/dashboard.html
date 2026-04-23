@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>SnapText — Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-wrap">
+    <div class="dashboard surface-premium ring-hairline">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="brand-logo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">SnapText</span>
+            <span class="brand-version mono">v2.1 · pro</span>
+          </div>
+        </div>
+
+        <div class="sidebar-cta">
+          <button class="btn-primary" id="btn-new">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Novo snippet
+            <kbd class="kbd-on-primary">⌘N</kbd>
+          </button>
+        </div>
+
+        <nav class="folders">
+          <div class="folders-label mono">Coleções</div>
+          <div id="folders-list"></div>
+
+          <div class="ai-card">
+            <div class="ai-card-glow"></div>
+            <div class="ai-card-content">
+              <div class="ai-card-label mono">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+                AI Suggest
+              </div>
+              <p class="ai-card-text">3 novos atalhos sugeridos com base no seu uso.</p>
+              <button class="ai-card-link mono">Revisar →</button>
+            </div>
+          </div>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <button class="sidebar-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+            Estatísticas
+          </button>
+          <button class="sidebar-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Configurações
+          </button>
+          <div class="profile-card">
+            <div class="profile-avatar">LP</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas P.</div>
+              <div class="profile-plan mono">Pro plan</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Snippet list -->
+      <section class="snippets-pane">
+        <div class="snippets-search">
+          <div class="search-box">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="dash-search" placeholder="Buscar snippets…" class="search-input mono" />
+            <kbd class="search-kbd">/</kbd>
+          </div>
+        </div>
+        <div class="snippets-list" id="snippets-list"></div>
+      </section>
+
+      <!-- Editor -->
+      <section class="editor">
+        <header class="editor-header">
+          <div class="breadcrumb">
+            <span>Snippets</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            <span id="ed-breadcrumb-title" class="breadcrumb-current">—</span>
+            <span id="ed-category" class="category-pill mono"></span>
+          </div>
+          <div class="editor-actions">
+            <button class="icon-btn" title="Copiar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="icon-btn icon-btn-danger" id="btn-delete" title="Excluir">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <div class="divider-v"></div>
+            <button class="btn-primary btn-primary-sm" id="btn-save">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Salvar
+            </button>
+          </div>
+        </header>
+
+        <div class="editor-body">
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label mono">Atalho</label>
+              <div class="field-row">
+                <input type="text" id="ed-trigger" class="input input-mono input-primary" />
+                <span class="hint mono">+ Tab</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label mono">Título</label>
+              <input type="text" id="ed-title" class="input" />
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label class="field-label mono">Texto expandido</label>
+              <div class="var-buttons">
+                <span class="var-label mono">inserir:</span>
+                <button class="var-btn mono" data-var="{{date}}">📅 {{date}}</button>
+                <button class="var-btn mono" data-var="{{ticket}}"># {{ticket}}</button>
+                <button class="var-btn mono" data-var="{{user}}">👤 {{user}}</button>
+              </div>
+            </div>
+            <div class="code-editor">
+              <div class="code-chrome mono">
+                <span class="dot dot-r"></span>
+                <span class="dot dot-y"></span>
+                <span class="dot dot-g"></span>
+                <span class="code-filename">snippet.md</span>
+              </div>
+              <textarea id="ed-body" class="code-textarea mono" rows="8"></textarea>
+            </div>
+            <div class="field-meta mono">
+              <span id="char-count">0 caracteres</span>
+              <span id="words-saved" class="words-saved">~0 palavras economizadas / uso</span>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="stat ring-hairline">
+              <div class="stat-label mono">Categoria</div>
+              <div class="stat-value" id="stat-cat">—</div>
+            </div>
+            <div class="stat ring-hairline">
+              <div class="stat-label mono">Usos totais</div>
+              <div class="stat-value stat-accent" id="stat-uses">0</div>
+            </div>
+            <div class="stat ring-hairline">
+              <div class="stat-label mono">Atualizado</div>
+              <div class="stat-value" id="stat-updated">agora</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label mono">Pré-visualização</label>
+            <div class="preview ring-hairline">
+              <div class="preview-head mono">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 16l4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg>
+                Como vai aparecer no campo
+              </div>
+              <div class="preview-body mono" id="preview-body"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
