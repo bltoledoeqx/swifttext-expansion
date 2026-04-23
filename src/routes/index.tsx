@@ -29,6 +29,7 @@ function Index() {
             Ver popup do navegador
           </Link>
         </div>
+        <DownloadBanner />
         <PluginDashboard />
       </div>
     </div>
