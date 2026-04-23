@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PluginDashboard } from "@/components/plugin/PluginDashboard";
+import { DownloadBanner } from "@/components/DownloadBanner";
 import { AppWindow } from "lucide-react";
 
 export const Route = createFileRoute("/")({
