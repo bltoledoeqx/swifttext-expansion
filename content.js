@@ -14,10 +14,12 @@ let snippetsCache = DEFAULT_SNIPPETS;
 function loadCache() {
   if (typeof chrome !== "undefined" && chrome.storage) {
     chrome.storage.local.get(["snippets"], (res) => {
-      if (res.snippets && res.snippets.length) snippetsCache = res.snippets;
+      if (Array.isArray(res.snippets)) snippetsCache = res.snippets;
     });
     chrome.storage.onChanged.addListener((changes) => {
-      if (changes.snippets) snippetsCache = changes.snippets.newValue || DEFAULT_SNIPPETS;
+      if (changes.snippets && Array.isArray(changes.snippets.newValue)) {
+        snippetsCache = changes.snippets.newValue;
+      }
     });
   }
 }

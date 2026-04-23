@@ -13,7 +13,7 @@
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="brand-logo">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            <img src="icon.png" alt="SnapText" width="16" height="16" />
           </div>
           <div class="brand-text">
             <span class="brand-name">SnapText</span>
@@ -32,37 +32,7 @@
         <nav class="folders">
           <div class="folders-label mono">Coleções</div>
           <div id="folders-list"></div>
-
-          <div class="ai-card">
-            <div class="ai-card-glow"></div>
-            <div class="ai-card-content">
-              <div class="ai-card-label mono">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
-                AI Suggest
-              </div>
-              <p class="ai-card-text">3 novos atalhos sugeridos com base no seu uso.</p>
-              <button class="ai-card-link mono">Revisar →</button>
-            </div>
-          </div>
         </nav>
-
-        <div class="sidebar-bottom">
-          <button class="sidebar-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
-            Estatísticas
-          </button>
-          <button class="sidebar-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Configurações
-          </button>
-          <div class="profile-card">
-            <div class="profile-avatar">LP</div>
-            <div class="profile-info">
-              <div class="profile-name">Lucas P.</div>
-              <div class="profile-plan mono">Pro plan</div>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <!-- Snippet list -->
@@ -114,6 +84,11 @@
               <label class="field-label mono">Título</label>
               <input type="text" id="ed-title" class="input" />
             </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label mono">Tag/Categoria</label>
+            <input type="text" id="ed-category-input" class="input input-mono" />
           </div>
 
           <div class="field">
