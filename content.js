@@ -26,9 +26,10 @@ function loadCache() {
 loadCache();
 
 let serviceNowCaseCache = null;
+let serviceNowTokenCache;
 
 function isServiceNowPage() {
-  return /service-now\.com$/i.test(window.location.hostname || "") && !!window.g_ck;
+  return /service-now\.com$/i.test(window.location.hostname || "");
 }
 
 async function getServiceNowCaseData() {
@@ -39,31 +40,69 @@ async function getServiceNowCaseData() {
   if (!sysId) return null;
 
   try {
+    if (typeof serviceNowTokenCache === "undefined") {
+      serviceNowTokenCache = await readPageVariable("g_ck");
+    }
+    if (!serviceNowTokenCache) return null;
+
     const response = await fetch(
       `/api/now/table/sn_customerservice_case/${sysId}?sysparm_display_value=all`,
       {
         headers: {
           Accept: "application/json",
-          "X-UserToken": window.g_ck,
+          "X-UserToken": serviceNowTokenCache,
         },
       }
     );
     const payload = await response.json();
     const result = payload?.result || {};
-    serviceNowCaseCache = {
-      ticket: result.u_order_number || "",
-      user: result.contact?.display_value || "",
-    };
+    const rawTicket = result.u_order_number;
+    const ticket = typeof rawTicket === "object"
+      ? (rawTicket.display_value || rawTicket.value || "")
+      : (rawTicket || "");
+    const rawUser = result.contact;
+    const user = typeof rawUser === "object"
+      ? (rawUser.display_value || rawUser.value || "")
+      : (rawUser || "");
+
+    serviceNowCaseCache = { ticket, user };
     return serviceNowCaseCache;
   } catch {
     return null;
   }
 }
 
+function readPageVariable(varName) {
+  return new Promise((resolve) => {
+    const eventType = `SNAPTEXT_READ_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("message", onMessage);
+      resolve(value || null);
+    };
+    const onMessage = (event) => {
+      if (event.source !== window) return;
+      if (event.data?.type !== eventType) return;
+      finish(event.data.value);
+    };
+    window.addEventListener("message", onMessage);
+
+    const script = document.createElement("script");
+    script.textContent = `window.postMessage({ type: ${JSON.stringify(eventType)}, value: window[${JSON.stringify(varName)}] || null }, '*');`;
+    (document.documentElement || document.head || document.body).appendChild(script);
+    script.remove();
+
+    setTimeout(() => finish(null), 300);
+  });
+}
+
 async function resolveVars(text) {
   const now = new Date().toLocaleString("pt-BR");
-  let ticketValue = "INC" + Math.floor(Math.random() * 900000 + 100000);
-  let userValue = "Você";
+  const onServiceNow = isServiceNowPage();
+  let ticketValue = onServiceNow ? "" : "INC" + Math.floor(Math.random() * 900000 + 100000);
+  let userValue = onServiceNow ? "" : "Você";
 
   if (/\{\{ticket\}\}|\{\{user\}\}/.test(text)) {
     const caseData = await getServiceNowCaseData();
