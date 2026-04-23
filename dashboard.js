@@ -1,20 +1,11 @@
 // SnapText Dashboard
 const DEFAULT_SNIPPETS = [
-  { id: "1", trigger: "/vm", title: "Restart VM", body: "Realizado restart da VM, serviço normalizado sem impacto adicional.", category: "Ops", uses: 142, updated: "há 2h", hue: "oklch(0.88 0.22 130)" },
-  { id: "2", trigger: "/sla", title: "SLA padrão", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis.", category: "Suporte", uses: 89, updated: "ontem", hue: "oklch(0.78 0.14 210)" },
-  { id: "3", trigger: "/ack", title: "Acknowledge", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update.", category: "Resposta", uses: 76, updated: "ontem", hue: "oklch(0.78 0.16 320)" },
-  { id: "4", trigger: "/sig", title: "Assinatura padrão", body: "Atenciosamente,\nEquipe de Operações N2", category: "Email", uses: 54, updated: "3 dias", hue: "oklch(0.80 0.14 60)" },
-  { id: "5", trigger: "/inc", title: "Incidente template", body: "Incidente {{ticket}} aberto em {{date}}.\nSeveridade: {{sev}}\nResponsável: {{user}}", category: "Variável", uses: 41, updated: "1 sem", hue: "oklch(0.72 0.18 25)" },
-  { id: "6", trigger: "/rca", title: "Root cause analysis", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção.", category: "Postmortem", uses: 23, updated: "2 sem", hue: "oklch(0.78 0.14 280)" },
-];
-
-const FOLDERS = [
-  { name: "Todos", count: 24 },
-  { name: "Ops", count: 8 },
-  { name: "Suporte", count: 6 },
-  { name: "Email", count: 5 },
-  { name: "Postmortem", count: 3 },
-  { name: "Variáveis", count: 2 },
+  { id: "1", trigger: "/vm", title: "Restart VM", body: "Realizado restart da VM, serviço normalizado sem impacto adicional.", category: "Ops", uses: 0, updated: "agora", hue: "oklch(0.88 0.22 130)" },
+  { id: "2", trigger: "/sla", title: "SLA padrão", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis.", category: "Suporte", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 210)" },
+  { id: "3", trigger: "/ack", title: "Acknowledge", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update.", category: "Resposta", uses: 0, updated: "agora", hue: "oklch(0.78 0.16 320)" },
+  { id: "4", trigger: "/sig", title: "Assinatura padrão", body: "Atenciosamente,\nEquipe de Operações N2", category: "Email", uses: 0, updated: "agora", hue: "oklch(0.80 0.14 60)" },
+  { id: "5", trigger: "/inc", title: "Incidente template", body: "Incidente {{ticket}} aberto em {{date}}.\nSeveridade: {{sev}}\nResponsável: {{user}}", category: "Variável", uses: 0, updated: "agora", hue: "oklch(0.72 0.18 25)" },
+  { id: "6", trigger: "/rca", title: "Root cause analysis", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção.", category: "Postmortem", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 280)" },
 ];
 
 let snippets = [];
@@ -47,9 +38,31 @@ function save() {
 
 function renderAll() { renderFolders(); renderSnippets(); renderEditor(); }
 
+function getFolders() {
+  const counts = snippets.reduce((acc, s) => {
+    const cat = s.category || "Geral";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+  return [{ name: "Todos", count: snippets.length }].concat(
+    Object.entries(counts).map(([name, count]) => ({ name, count }))
+  );
+}
+
+function getFilteredSnippets() {
+  const q = query.toLowerCase();
+  return snippets.filter((s) => {
+    const matchesFolder = activeFolder === "Todos" || (s.category || "Geral") === activeFolder;
+    const matchesQuery = s.trigger.toLowerCase().includes(q) || s.title.toLowerCase().includes(q);
+    return matchesFolder && matchesQuery;
+  });
+}
+
 function renderFolders() {
   foldersList.innerHTML = "";
-  FOLDERS.forEach((f) => {
+  const folders = getFolders();
+  if (!folders.some((f) => f.name === activeFolder)) activeFolder = "Todos";
+  folders.forEach((f) => {
     const btn = document.createElement("button");
     btn.className = "folder-btn" + (activeFolder === f.name ? " active" : "");
     btn.innerHTML = `
@@ -59,16 +72,19 @@ function renderFolders() {
       </span>
       <span class="folder-count">${f.count}</span>
     `;
-    btn.addEventListener("click", () => { activeFolder = f.name; renderFolders(); });
+    btn.addEventListener("click", () => {
+      activeFolder = f.name;
+      renderAll();
+    });
     foldersList.appendChild(btn);
   });
 }
 
 function renderSnippets() {
-  const q = query.toLowerCase();
-  const filtered = snippets.filter(
-    (s) => s.trigger.toLowerCase().includes(q) || s.title.toLowerCase().includes(q)
-  );
+  const filtered = getFilteredSnippets();
+  if (filtered.length && !filtered.some((s) => s.id === selectedId)) {
+    selectedId = filtered[0].id;
+  }
   snippetsList.innerHTML = "";
   filtered.forEach((s) => {
     const btn = document.createElement("button");
@@ -98,14 +114,15 @@ function renderEditor() {
   document.getElementById("ed-breadcrumb-title").textContent = s.title;
   document.getElementById("ed-trigger").value = s.trigger;
   document.getElementById("ed-title").value = s.title;
+  document.getElementById("ed-category-input").value = s.category || "Geral";
   document.getElementById("ed-body").value = s.body;
-  document.getElementById("stat-cat").textContent = s.category;
+  document.getElementById("stat-cat").textContent = s.category || "Geral";
   document.getElementById("stat-uses").textContent = s.uses;
   document.getElementById("stat-updated").textContent = s.updated || "agora";
   document.getElementById("preview-body").textContent = s.body;
 
   const cat = document.getElementById("ed-category");
-  cat.innerHTML = `<span class="pill-dot" style="background:${s.hue}"></span>${s.category}`;
+  cat.innerHTML = `<span class="pill-dot" style="background:${s.hue}"></span>${s.category || "Geral"}`;
   cat.style.borderColor = `color-mix(in oklab, ${s.hue} 35%, transparent)`;
   cat.style.background = `color-mix(in oklab, ${s.hue} 10%, transparent)`;
   cat.style.color = s.hue;
@@ -139,16 +156,17 @@ searchEl.addEventListener("input", (e) => { query = e.target.value; renderSnippe
 document.getElementById("btn-save").addEventListener("click", () => {
   const idx = snippets.findIndex((x) => x.id === selectedId);
   if (idx >= 0) {
+    let trigger = document.getElementById("ed-trigger").value.trim();
     snippets[idx] = {
       ...snippets[idx],
-      trigger: document.getElementById("ed-trigger").value,
+      trigger,
       title: document.getElementById("ed-title").value,
+      category: document.getElementById("ed-category-input").value.trim() || "Geral",
       body: document.getElementById("ed-body").value,
       updated: "agora",
     };
     save();
-    renderSnippets();
-    renderEditor();
+    renderAll();
   }
 });
 
@@ -157,8 +175,7 @@ document.getElementById("btn-delete").addEventListener("click", () => {
   snippets = snippets.filter((x) => x.id !== selectedId);
   selectedId = snippets[0]?.id || "";
   save();
-  renderSnippets();
-  renderEditor();
+  renderAll();
 });
 
 document.getElementById("btn-new").addEventListener("click", () => {
@@ -172,8 +189,7 @@ document.getElementById("btn-new").addEventListener("click", () => {
   snippets.unshift(novo);
   selectedId = id;
   save();
-  renderSnippets();
-  renderEditor();
+  renderAll();
 });
 
 load();
