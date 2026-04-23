@@ -10,12 +10,14 @@
     "default_title": "SnapText",
     "default_icon": {
       "16": "icon.png",
+      "32": "icon.png",
       "48": "icon.png",
       "128": "icon.png"
     }
   },
   "icons": {
     "16": "icon.png",
+    "32": "icon.png",
     "48": "icon.png",
     "128": "icon.png"
   },
@@ -27,7 +29,9 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "options_page": "dashboard.html"
