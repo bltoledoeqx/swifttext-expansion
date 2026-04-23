@@ -14,10 +14,12 @@ let snippetsCache = DEFAULT_SNIPPETS;
 function loadCache() {
   if (typeof chrome !== "undefined" && chrome.storage) {
     chrome.storage.local.get(["snippets"], (res) => {
-      if (res.snippets && res.snippets.length) snippetsCache = res.snippets;
+      if (Array.isArray(res.snippets)) snippetsCache = res.snippets;
     });
     chrome.storage.onChanged.addListener((changes) => {
-      if (changes.snippets) snippetsCache = changes.snippets.newValue || DEFAULT_SNIPPETS;
+      if (changes.snippets && Array.isArray(changes.snippets.newValue)) {
+        snippetsCache = changes.snippets.newValue;
+      }
     });
   }
 }
@@ -65,10 +67,11 @@ function replaceTriggerAt(el, triggerLen, body) {
   }
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Tab" && e.key !== " ") return;
-  const el = document.activeElement;
-  if (!el) return;
+let isReplacingTrigger = false;
+
+function tryExpandTrigger(el) {
+  if (!el || isReplacingTrigger) return false;
+
   let textBefore = "";
   if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
     textBefore = (el.value || "").slice(0, el.selectionStart);
@@ -78,15 +81,43 @@ document.addEventListener("keydown", (e) => {
       const r = sel.getRangeAt(0);
       textBefore = (r.endContainer.textContent || "").slice(0, r.endOffset);
     }
-  } else return;
+  } else {
+    return false;
+  }
 
-  const match = textBefore.match(/(\/[a-zA-Z0-9_-]+)$/);
-  if (!match) return;
-  const trig = match[1];
-  const found = snippetsCache.find((s) => s.trigger === trig);
-  if (!found) return;
+  const match = textBefore.match(/([^\s]+)$/);
+  if (!match) return false;
+
+  const typedToken = match[1];
+  const candidates = typedToken.startsWith("/")
+    ? [typedToken, typedToken.slice(1)]
+    : [typedToken, `/${typedToken}`];
+  const found = snippetsCache.find((s) => candidates.includes((s.trigger || "").trim()));
+  if (!found) return false;
+
+  const replaceLen = typedToken.length;
+
+  isReplacingTrigger = true;
+  try {
+    replaceTriggerAt(el, replaceLen, found.body);
+  } finally {
+    isReplacingTrigger = false;
+  }
+  return true;
+}
+
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  tryExpandTrigger(el);
+}, true);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const el = document.activeElement;
+  if (!el) return;
+  const expanded = tryExpandTrigger(el);
+  if (!expanded) return;
   e.preventDefault();
-  replaceTriggerAt(el, trig.length, found.body);
 }, true);
 
 if (typeof chrome !== "undefined" && chrome.runtime) {
