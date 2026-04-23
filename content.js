@@ -25,17 +25,61 @@ function loadCache() {
 }
 loadCache();
 
-function resolveVars(text) {
-  const date = new Date().toLocaleDateString("pt-BR");
+let serviceNowCaseCache = null;
+
+function isServiceNowPage() {
+  return /service-now\.com$/i.test(window.location.hostname || "") && !!window.g_ck;
+}
+
+async function getServiceNowCaseData() {
+  if (serviceNowCaseCache) return serviceNowCaseCache;
+  if (!isServiceNowPage()) return null;
+
+  const sysId = new URLSearchParams(window.location.search).get("sys_id");
+  if (!sysId) return null;
+
+  try {
+    const response = await fetch(
+      `/api/now/table/sn_customerservice_case/${sysId}?sysparm_display_value=all`,
+      {
+        headers: {
+          Accept: "application/json",
+          "X-UserToken": window.g_ck,
+        },
+      }
+    );
+    const payload = await response.json();
+    const result = payload?.result || {};
+    serviceNowCaseCache = {
+      ticket: result.u_order_number || "",
+      user: result.contact?.display_value || "",
+    };
+    return serviceNowCaseCache;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveVars(text) {
+  const now = new Date().toLocaleString("pt-BR");
+  let ticketValue = "INC" + Math.floor(Math.random() * 900000 + 100000);
+  let userValue = "Você";
+
+  if (/\{\{ticket\}\}|\{\{user\}\}/.test(text)) {
+    const caseData = await getServiceNowCaseData();
+    if (caseData?.ticket) ticketValue = caseData.ticket;
+    if (caseData?.user) userValue = caseData.user;
+  }
+
   return text
-    .replace(/\{\{date\}\}/g, date)
-    .replace(/\{\{user\}\}/g, "Você")
-    .replace(/\{\{ticket\}\}/g, "INC" + Math.floor(Math.random() * 900000 + 100000))
+    .replace(/\{\{date\}\}/g, now)
+    .replace(/\{\{user\}\}/g, userValue)
+    .replace(/\{\{ticket\}\}/g, ticketValue)
     .replace(/\{\{sev\}\}/g, "P3");
 }
 
-function insertAtCursor(el, text) {
-  const resolved = resolveVars(text);
+async function insertAtCursor(el, text) {
+  const resolved = await resolveVars(text);
   if (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && /text|search|email|url/i.test(el.type || "text"))) {
     const start = el.selectionStart ?? el.value.length;
     const end = el.selectionEnd ?? el.value.length;
@@ -47,18 +91,21 @@ function insertAtCursor(el, text) {
   }
 }
 
-function replaceTriggerAt(el, triggerLen, body) {
-  const resolved = resolveVars(body);
+async function replaceTriggerAt(el, typedToken, body) {
+  const resolved = await resolveVars(body);
   if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
     const pos = el.selectionStart;
-    el.value = el.value.slice(0, pos - triggerLen) + resolved + el.value.slice(pos);
-    el.selectionStart = el.selectionEnd = pos - triggerLen + resolved.length;
+    if (!Number.isInteger(pos)) return;
+    const start = Math.max(0, pos - typedToken.length);
+    if (el.value.slice(start, pos) !== typedToken) return;
+    el.value = el.value.slice(0, start) + resolved + el.value.slice(pos);
+    el.selectionStart = el.selectionEnd = start + resolved.length;
     el.dispatchEvent(new Event("input", { bubbles: true }));
   } else if (el.isContentEditable) {
     const sel = window.getSelection();
     if (!sel.rangeCount) return;
     const range = sel.getRangeAt(0);
-    range.setStart(range.endContainer, Math.max(0, range.endOffset - triggerLen));
+    range.setStart(range.endContainer, Math.max(0, range.endOffset - typedToken.length));
     range.deleteContents();
     range.insertNode(document.createTextNode(resolved));
     range.collapse(false);
@@ -69,7 +116,7 @@ function replaceTriggerAt(el, triggerLen, body) {
 
 let isReplacingTrigger = false;
 
-function tryExpandTrigger(el) {
+async function tryExpandTrigger(el) {
   if (!el || isReplacingTrigger) return false;
 
   let textBefore = "";
@@ -95,27 +142,25 @@ function tryExpandTrigger(el) {
   const found = snippetsCache.find((s) => candidates.includes((s.trigger || "").trim()));
   if (!found) return false;
 
-  const replaceLen = typedToken.length;
-
   isReplacingTrigger = true;
   try {
-    replaceTriggerAt(el, replaceLen, found.body);
+    await replaceTriggerAt(el, typedToken, found.body);
   } finally {
     isReplacingTrigger = false;
   }
   return true;
 }
 
-document.addEventListener("input", (e) => {
+document.addEventListener("input", async (e) => {
   const el = e.target;
-  tryExpandTrigger(el);
+  await tryExpandTrigger(el);
 }, true);
 
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", async (e) => {
   if (e.key !== "Tab") return;
   const el = document.activeElement;
   if (!el) return;
-  const expanded = tryExpandTrigger(el);
+  const expanded = await tryExpandTrigger(el);
   if (!expanded) return;
   e.preventDefault();
 }, true);
@@ -124,8 +169,14 @@ if (typeof chrome !== "undefined" && chrome.runtime) {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "INSERT_SNIPPET") {
       const el = document.activeElement;
-      if (el) insertAtCursor(el, msg.body);
-      sendResponse({ ok: true });
+      if (el) {
+        insertAtCursor(el, msg.body).then(() => sendResponse({ ok: true }));
+      } else {
+        sendResponse({ ok: false });
+      }
+      return true;
     }
   });
 }
+
+getServiceNowCaseData();
