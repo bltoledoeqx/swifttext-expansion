@@ -15,3 +15,55 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
 });
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type !== "FETCH_SN_CASE_CONTEXT") return;
+
+  const tabId = sender.tab?.id;
+  const frameId = sender.frameId;
+  if (typeof tabId !== "number") {
+    sendResponse({ ok: false });
+    return;
+  }
+
+  chrome.scripting.executeScript(
+    {
+      target: { tabId, frameIds: typeof frameId === "number" ? [frameId] : undefined },
+      world: "MAIN",
+      args: [msg.sysId],
+      func: async (sysId) => {
+        try {
+          if (!window.g_ck || !sysId) return null;
+          const headers = {
+            Accept: "application/json",
+            "X-UserToken": window.g_ck,
+          };
+          const r = await fetch(
+            `/api/now/table/sn_customerservice_case/${sysId}?sysparm_display_value=all&sysparm_fields=u_order_number,contact`,
+            { headers }
+          );
+          if (!r.ok) return null;
+          const payload = await r.json();
+          const result = payload?.result || {};
+          const rawTicket = result.u_order_number;
+          const ticket = typeof rawTicket === "object"
+            ? (rawTicket.display_value || rawTicket.value || "")
+            : (rawTicket || "");
+          const rawUser = result.contact;
+          const user = typeof rawUser === "object"
+            ? (rawUser.display_value || rawUser.value || "")
+            : (rawUser || "");
+          return { ticket, user };
+        } catch {
+          return null;
+        }
+      },
+    },
+    (results) => {
+      const ctx = results?.[0]?.result || null;
+      sendResponse({ ok: true, context: ctx });
+    }
+  );
+
+  return true;
+});

@@ -26,7 +26,6 @@ function loadCache() {
 loadCache();
 
 let serviceNowCaseCache = null;
-let serviceNowTokenCache;
 
 function isServiceNowPage() {
   return /service-now\.com$/i.test(window.location.hostname || "");
@@ -40,69 +39,61 @@ async function getServiceNowCaseData() {
   if (!sysId) return null;
 
   try {
-    if (typeof serviceNowTokenCache === "undefined") {
-      serviceNowTokenCache = await readPageVariable("g_ck");
-    }
-    if (!serviceNowTokenCache) return null;
+    const fromMainWorld = await fetchServiceNowContextFromMainWorld(sysId);
+    const ticket = fromMainWorld?.ticket || "";
+    const user = fromMainWorld?.user || "";
 
-    const response = await fetch(
-      `/api/now/table/sn_customerservice_case/${sysId}?sysparm_display_value=all`,
-      {
-        headers: {
-          Accept: "application/json",
-          "X-UserToken": serviceNowTokenCache,
-        },
-      }
-    );
-    const payload = await response.json();
-    const result = payload?.result || {};
-    const rawTicket = result.u_order_number;
-    const ticket = typeof rawTicket === "object"
-      ? (rawTicket.display_value || rawTicket.value || "")
-      : (rawTicket || "");
-    const rawUser = result.contact;
-    const user = typeof rawUser === "object"
-      ? (rawUser.display_value || rawUser.value || "")
-      : (rawUser || "");
-
-    serviceNowCaseCache = { ticket, user };
+    serviceNowCaseCache = {
+      ticket: ticket || getServiceNowTicketFromDom(),
+      user: user || getServiceNowUserFromDom(),
+    };
     return serviceNowCaseCache;
   } catch {
-    return null;
+    const ticket = getServiceNowTicketFromDom();
+    const user = getServiceNowUserFromDom();
+    if (!ticket && !user) return null;
+    serviceNowCaseCache = { ticket, user };
+    return serviceNowCaseCache;
   }
 }
 
-function readPageVariable(varName) {
+function fetchServiceNowContextFromMainWorld(sysId) {
+  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+    return Promise.resolve(null);
+  }
+
   return new Promise((resolve) => {
-    const eventType = `SNAPTEXT_READ_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    let done = false;
-    const finish = (value) => {
-      if (done) return;
-      done = true;
-      window.removeEventListener("message", onMessage);
-      resolve(value || null);
-    };
-    const onMessage = (event) => {
-      if (event.source !== window) return;
-      if (event.data?.type !== eventType) return;
-      finish(event.data.value);
-    };
-    window.addEventListener("message", onMessage);
-
-    const script = document.createElement("script");
-    script.textContent = `window.postMessage({ type: ${JSON.stringify(eventType)}, value: window[${JSON.stringify(varName)}] || null }, '*');`;
-    (document.documentElement || document.head || document.body).appendChild(script);
-    script.remove();
-
-    setTimeout(() => finish(null), 300);
+    chrome.runtime.sendMessage({ type: "FETCH_SN_CASE_CONTEXT", sysId }, (res) => {
+      if (chrome.runtime.lastError || !res?.ok) {
+        resolve(null);
+        return;
+      }
+      resolve(res.context || null);
+    });
   });
+}
+
+function getServiceNowTicketFromDom() {
+  return (
+    document.getElementById("sn_customerservice_case.u_order_number")?.value ||
+    document.querySelector('[name="sn_customerservice_case.u_order_number"]')?.value ||
+    ""
+  ).trim();
+}
+
+function getServiceNowUserFromDom() {
+  return (
+    document.getElementById("sys_display.sn_customerservice_case.contact")?.value ||
+    document.querySelector('[name="sys_display.sn_customerservice_case.contact"]')?.value ||
+    ""
+  ).trim();
 }
 
 async function resolveVars(text) {
   const now = new Date().toLocaleString("pt-BR");
   const onServiceNow = isServiceNowPage();
-  let ticketValue = onServiceNow ? "" : "INC" + Math.floor(Math.random() * 900000 + 100000);
-  let userValue = onServiceNow ? "" : "Você";
+  let ticketValue = onServiceNow ? "{{ticket}}" : "INC" + Math.floor(Math.random() * 900000 + 100000);
+  let userValue = onServiceNow ? "{{user}}" : "Você";
 
   if (/\{\{ticket\}\}|\{\{user\}\}/.test(text)) {
     const caseData = await getServiceNowCaseData();
