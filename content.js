@@ -65,10 +65,11 @@ function replaceTriggerAt(el, triggerLen, body) {
   }
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Tab" && e.key !== " ") return;
-  const el = document.activeElement;
-  if (!el) return;
+let isReplacingTrigger = false;
+
+function tryExpandTrigger(el) {
+  if (!el || isReplacingTrigger) return false;
+
   let textBefore = "";
   if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
     textBefore = (el.value || "").slice(0, el.selectionStart);
@@ -78,15 +79,38 @@ document.addEventListener("keydown", (e) => {
       const r = sel.getRangeAt(0);
       textBefore = (r.endContainer.textContent || "").slice(0, r.endOffset);
     }
-  } else return;
+  } else {
+    return false;
+  }
 
   const match = textBefore.match(/(\/[a-zA-Z0-9_-]+)$/);
-  if (!match) return;
+  if (!match) return false;
+
   const trig = match[1];
   const found = snippetsCache.find((s) => s.trigger === trig);
-  if (!found) return;
+  if (!found) return false;
+
+  isReplacingTrigger = true;
+  try {
+    replaceTriggerAt(el, trig.length, found.body);
+  } finally {
+    isReplacingTrigger = false;
+  }
+  return true;
+}
+
+document.addEventListener("input", () => {
+  const el = document.activeElement;
+  tryExpandTrigger(el);
+}, true);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const el = document.activeElement;
+  if (!el) return;
+  const expanded = tryExpandTrigger(el);
+  if (!expanded) return;
   e.preventDefault();
-  replaceTriggerAt(el, trig.length, found.body);
 }, true);
 
 if (typeof chrome !== "undefined" && chrome.runtime) {
