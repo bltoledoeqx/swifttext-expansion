@@ -68,7 +68,6 @@ function replaceTriggerAt(el, triggerLen, body) {
 }
 
 let isReplacingTrigger = false;
-let scheduledExpand = null;
 
 function tryExpandTrigger(el) {
   if (!el || isReplacingTrigger) return false;
@@ -86,39 +85,30 @@ function tryExpandTrigger(el) {
     return false;
   }
 
-  const match = textBefore.match(/(\/[a-zA-Z0-9_-]+)$/);
+  const match = textBefore.match(/([^\s]+)$/);
   if (!match) return false;
 
-  const trig = match[1];
-  const found = snippetsCache.find((s) => s.trigger === trig);
+  const typedToken = match[1];
+  const candidates = typedToken.startsWith("/")
+    ? [typedToken, typedToken.slice(1)]
+    : [typedToken, `/${typedToken}`];
+  const found = snippetsCache.find((s) => candidates.includes((s.trigger || "").trim()));
   if (!found) return false;
+
+  const replaceLen = typedToken.length;
 
   isReplacingTrigger = true;
   try {
-    replaceTriggerAt(el, trig.length, found.body);
+    replaceTriggerAt(el, replaceLen, found.body);
   } finally {
     isReplacingTrigger = false;
   }
   return true;
 }
 
-function scheduleTriggerExpansion() {
-  if (scheduledExpand) return;
-  scheduledExpand = setTimeout(() => {
-    scheduledExpand = null;
-    const el = document.activeElement;
-    tryExpandTrigger(el);
-  }, 0);
-}
-
-document.addEventListener("input", () => {
-  scheduleTriggerExpansion();
-}, true);
-
-document.addEventListener("keyup", (e) => {
-  if (e.key === "Tab") return;
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  scheduleTriggerExpansion();
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  tryExpandTrigger(el);
 }, true);
 
 document.addEventListener("keydown", (e) => {

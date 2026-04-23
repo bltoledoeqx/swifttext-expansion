@@ -157,7 +157,6 @@ document.getElementById("btn-save").addEventListener("click", () => {
   const idx = snippets.findIndex((x) => x.id === selectedId);
   if (idx >= 0) {
     let trigger = document.getElementById("ed-trigger").value.trim();
-    if (trigger && !trigger.startsWith("/")) trigger = `/${trigger}`;
     snippets[idx] = {
       ...snippets[idx],
       trigger,
