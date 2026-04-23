@@ -90,7 +90,10 @@ function getServiceNowUserFromDom() {
 }
 
 async function resolveVars(text) {
-  const now = new Date().toLocaleString("pt-BR");
+  const nowDate = new Date();
+  const now = nowDate.toLocaleString("pt-BR");
+  const hour = nowDate.getHours();
+  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const onServiceNow = isServiceNowPage();
   let ticketValue = onServiceNow ? "{{ticket}}" : "INC" + Math.floor(Math.random() * 900000 + 100000);
   let userValue = onServiceNow ? "{{user}}" : "Você";
@@ -101,7 +104,11 @@ async function resolveVars(text) {
     if (caseData?.user) userValue = caseData.user;
   }
 
-  return text
+  const normalizedGreetingText = text
+    .replace(/\{\{greeting\}\}/gi, greeting)
+    .replace(/\bBom dia\b|\bBoa tarde\b|\bBoa noite\b/i, greeting);
+
+  return normalizedGreetingText
     .replace(/\{\{date\}\}/g, now)
     .replace(/\{\{user\}\}/g, userValue)
     .replace(/\{\{ticket\}\}/g, ticketValue)
