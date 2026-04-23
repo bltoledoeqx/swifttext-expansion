@@ -66,6 +66,7 @@ function replaceTriggerAt(el, triggerLen, body) {
 }
 
 let isReplacingTrigger = false;
+let scheduledExpand = null;
 
 function tryExpandTrigger(el) {
   if (!el || isReplacingTrigger) return false;
@@ -99,9 +100,23 @@ function tryExpandTrigger(el) {
   return true;
 }
 
+function scheduleTriggerExpansion() {
+  if (scheduledExpand) return;
+  scheduledExpand = setTimeout(() => {
+    scheduledExpand = null;
+    const el = document.activeElement;
+    tryExpandTrigger(el);
+  }, 0);
+}
+
 document.addEventListener("input", () => {
-  const el = document.activeElement;
-  tryExpandTrigger(el);
+  scheduleTriggerExpansion();
+}, true);
+
+document.addEventListener("keyup", (e) => {
+  if (e.key === "Tab") return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  scheduleTriggerExpansion();
 }, true);
 
 document.addEventListener("keydown", (e) => {
