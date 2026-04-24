@@ -1,3 +1,7 @@
+html {
+  overflow: hidden;
+}
+
 .popup-body {
   width: 380px;
   height: 540px;

@@ -17,7 +17,7 @@
           </div>
           <div class="brand-text">
             <span class="brand-name">SnapText</span>
-            <span class="brand-version mono">v2.1 · pro</span>
+            <span class="brand-version mono">v1.0 · pro</span>
           </div>
         </div>
 
@@ -33,6 +33,26 @@
           <div class="folders-label mono">Coleções</div>
           <div id="folders-list"></div>
         </nav>
+
+        <div class="sidebar-io">
+          <div class="io-label mono">Backup &amp; Import</div>
+          <div class="io-btns">
+            <button class="io-btn" id="btn-export-json" title="Exportar backup JSON">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar JSON
+            </button>
+            <button class="io-btn" id="btn-export-csv" title="Exportar CSV compatível com Text Blaze">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar CSV
+            </button>
+            <label class="io-btn io-import" title="Importar JSON / CSV / XML (PhraseExpress)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 15 12 10 17 15"/><line x1="12" y1="10" x2="12" y2="21"/></svg>
+              Importar JSON / CSV / XML
+              <input type="file" id="btn-import" accept=".json,.csv,.xml" style="display:none" />
+            </label>
+          </div>
+          <div id="io-toast" class="io-toast" style="display:none"></div>
+        </div>
       </aside>
 
       <!-- Snippet list -->
@@ -57,7 +77,7 @@
             <span id="ed-category" class="category-pill mono"></span>
           </div>
           <div class="editor-actions">
-            <button class="icon-btn" title="Copiar">
+            <button class="icon-btn" id="btn-copy" title="Copiar">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
             <button class="icon-btn icon-btn-danger" id="btn-delete" title="Excluir">
@@ -95,20 +115,51 @@
             <div class="field-head">
               <label class="field-label mono">Texto expandido</label>
               <div class="var-buttons">
-                <span class="var-label mono">inserir:</span>
-                <button class="var-btn mono" data-var="{{date}}">📅 {{date}}</button>
+                <span class="var-label mono">variáveis:</span>
+                <button class="var-btn mono" data-var="{{saudacao}}">🌅 {{saudacao}}</button>
+                <button class="var-btn mono" data-var="{{datetime}}">📅 {{datetime}}</button>
                 <button class="var-btn mono" data-var="{{ticket}}"># {{ticket}}</button>
-                <button class="var-btn mono" data-var="{{user}}">👤 {{user}}</button>
+                <button class="var-btn mono" data-var="{{clientuser}}">👤 {{clientuser}}</button>
               </div>
             </div>
+
+            <!-- Formatting toolbar -->
+            <div class="fmt-toolbar">
+              <div class="fmt-group">
+                <button class="fmt-btn" data-fmt="bold" title="Negrito"><strong>B</strong></button>
+                <button class="fmt-btn fmt-italic" data-fmt="italic" title="Itálico"><em>I</em></button>
+                <button class="fmt-btn fmt-underline" data-fmt="underline" title="Sublinhado"><u>U</u></button>
+                <button class="fmt-btn fmt-strike" data-fmt="strike" title="Tachado"><s>S</s></button>
+              </div>
+              <div class="fmt-sep"></div>
+              <div class="fmt-group">
+                <button class="fmt-btn" data-fmt="h1" title="Título H1">H1</button>
+                <button class="fmt-btn" data-fmt="h2" title="Título H2">H2</button>
+                <button class="fmt-btn" data-fmt="ul" title="Lista com marcador">• Lista</button>
+                <button class="fmt-btn" data-fmt="ol" title="Lista numerada">1. Lista</button>
+              </div>
+              <div class="fmt-sep"></div>
+              <div class="fmt-group">
+                <label class="fmt-btn fmt-color-wrap" title="Cor da fonte">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7l-3 13h2l1-4h6l1 4h2L15 7H9zm-0.2 7l2.2-8 2.2 8H8.8z"/></svg>
+                  <span>Cor</span>
+                  <input type="color" id="fmt-color" value="#e63946" />
+                </label>
+                <button class="fmt-btn fmt-code-tag" data-fmt="codetag" title="Bloco [code][/code] para HTML no ServiceNow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  [code]
+                </button>
+              </div>
+            </div>
+
             <div class="code-editor">
               <div class="code-chrome mono">
                 <span class="dot dot-r"></span>
                 <span class="dot dot-y"></span>
                 <span class="dot dot-g"></span>
-                <span class="code-filename">snippet.md</span>
+                <span class="code-filename">snippet.html</span>
               </div>
-              <textarea id="ed-body" class="code-textarea mono" rows="8"></textarea>
+              <textarea id="ed-body" class="code-textarea mono" rows="8" spellcheck="false"></textarea>
             </div>
             <div class="field-meta mono">
               <span id="char-count">0 caracteres</span>
@@ -136,9 +187,9 @@
             <div class="preview ring-hairline">
               <div class="preview-head mono">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 16l4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg>
-                Como vai aparecer no campo
+                Preview HTML — como vai aparecer no ServiceNow
               </div>
-              <div class="preview-body mono" id="preview-body"></div>
+              <div class="preview-body" id="preview-body"></div>
             </div>
           </div>
         </div>

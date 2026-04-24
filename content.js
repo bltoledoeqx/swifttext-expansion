@@ -5,7 +5,7 @@ const DEFAULT_SNIPPETS = [
   { trigger: "/sla", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis." },
   { trigger: "/ack", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update." },
   { trigger: "/sig", body: "Atenciosamente,\nEquipe de Operações N2" },
-  { trigger: "/inc", body: "Incidente {{ticket}} aberto em {{date}}.\nSeveridade: {{sev}}\nResponsável: {{user}}" },
+  { trigger: "/inc", body: "Incidente {{ticket}} aberto em {{datetime}}.\nSeveridade: \nResponsável: {{clientuser}}" },
   { trigger: "/rca", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção." },
 ];
 
@@ -98,7 +98,7 @@ async function resolveVars(text) {
   let ticketValue = onServiceNow ? "{{ticket}}" : "INC" + Math.floor(Math.random() * 900000 + 100000);
   let userValue = onServiceNow ? "{{user}}" : "Você";
 
-  if (/\{\{ticket\}\}|\{\{user\}\}/.test(text)) {
+  if (/\{\{ticket\}\}|\{\{clientuser\}\}|\{\{user\}\}/.test(text)) {
     const caseData = await getServiceNowCaseData();
     if (caseData?.ticket) ticketValue = caseData.ticket;
     if (caseData?.user) userValue = caseData.user;
@@ -110,10 +110,9 @@ async function resolveVars(text) {
 
   return normalizedGreetingText
     .replace(/\{\{datetime\}\}/gi, dateTimeNow)
-    .replace(/\{\{date\}\}/gi, greeting)
-    .replace(/\{\{user\}\}/gi, userValue)
-    .replace(/\{\{ticket\}\}/gi, ticketValue)
-    .replace(/\{\{sev\}\}/gi, "P3");
+    .replace(/\{\{saudacao\}\}|\{\{date\}\}/gi, greeting)
+    .replace(/\{\{clientuser\}\}|\{\{user\}\}/gi, userValue)
+    .replace(/\{\{ticket\}\}/gi, ticketValue);
 }
 
 async function insertAtCursor(el, text) {
@@ -183,6 +182,10 @@ async function tryExpandTrigger(el) {
   isReplacingTrigger = true;
   try {
     await replaceTriggerAt(el, typedToken, found.body);
+    // Track real usage — fire-and-forget to background
+    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ type: "TRACK_USE", id: found.id, trigger: found.trigger });
+    }
   } finally {
     isReplacingTrigger = false;
   }
@@ -208,7 +211,13 @@ if (typeof chrome !== "undefined" && chrome.runtime) {
     if (msg.type === "INSERT_SNIPPET") {
       const el = document.activeElement;
       if (el) {
-        insertAtCursor(el, msg.body).then(() => sendResponse({ ok: true }));
+        insertAtCursor(el, msg.body).then(() => {
+          // Track use — popup already tracks too, but background dedupes via id
+          if (msg.id || msg.trigger) {
+            chrome.runtime.sendMessage({ type: "TRACK_USE", id: msg.id, trigger: msg.trigger });
+          }
+          sendResponse({ ok: true });
+        });
       } else {
         sendResponse({ ok: false });
       }

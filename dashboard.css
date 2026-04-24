@@ -432,3 +432,151 @@
   line-height: 1.6;
   white-space: pre-wrap;
 }
+
+/* ── Import / Export ──────────────────────────────────── */
+.sidebar-io {
+  padding: 12px 8px 16px;
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  margin-top: auto;
+}
+.io-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted-foreground);
+  padding: 0 6px 8px;
+}
+.io-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.io-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  background: transparent;
+}
+.io-btn:hover {
+  background: var(--accent);
+  color: var(--foreground);
+  border-color: color-mix(in oklab, var(--border) 80%, transparent);
+}
+.io-btn svg { flex-shrink: 0; opacity: 0.7; }
+.io-import { cursor: pointer; }
+
+.io-toast {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", monospace;
+  line-height: 1.4;
+}
+.io-toast.success {
+  background: color-mix(in oklab, oklch(0.75 0.18 145) 12%, transparent);
+  border: 1px solid color-mix(in oklab, oklch(0.75 0.18 145) 30%, transparent);
+  color: oklch(0.75 0.18 145);
+}
+.io-toast.error {
+  background: color-mix(in oklab, var(--destructive) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent);
+  color: var(--destructive);
+}
+
+/* ── Formatting Toolbar ───────────────────────────────── */
+.fmt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: color-mix(in oklab, var(--surface-elevated) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  flex-wrap: wrap;
+}
+.fmt-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.fmt-sep {
+  width: 1px;
+  height: 18px;
+  background: color-mix(in oklab, var(--border) 80%, transparent);
+  margin: 0 4px;
+}
+.fmt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.12s;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.fmt-btn:hover {
+  background: var(--accent);
+  color: var(--foreground);
+  border-color: color-mix(in oklab, var(--border) 60%, transparent);
+}
+.fmt-btn strong { font-weight: 800; font-size: 13px; }
+.fmt-italic em { font-style: italic; }
+.fmt-underline u { text-decoration: underline; }
+.fmt-strike s { text-decoration: line-through; }
+.fmt-code-tag { font-family: "JetBrains Mono", monospace; font-size: 11px; }
+.fmt-color-wrap {
+  cursor: pointer;
+  position: relative;
+}
+.fmt-color-wrap input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.fmt-color-wrap:hover { background: var(--accent); color: var(--foreground); border-color: color-mix(in oklab, var(--border) 60%, transparent); }
+
+/* Attach toolbar to top of textarea */
+.code-editor {
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Preview HTML rendering */
+.preview-body {
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 48px;
+  color: var(--foreground);
+}
+.preview-body b, .preview-body strong { font-weight: 700; }
+.preview-body i, .preview-body em { font-style: italic; }
+.preview-body u { text-decoration: underline; }
+.preview-body s { text-decoration: line-through; }
+.preview-body h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.preview-body h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.preview-body ul { padding-left: 18px; list-style: disc; }
+.preview-body ol { padding-left: 18px; list-style: decimal; }
+.preview-body li { margin: 2px 0; }
+.preview-body [style*="color"] { }

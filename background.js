@@ -1,22 +1,116 @@
 // SnapText service worker
+const DEFAULT_SNIPPETS_BG = [
+  { id: "1", trigger: "/vm", title: "Restart VM", body: "Realizado restart da VM, serviço normalizado sem impacto adicional.", category: "Ops", uses: 0, updated: "agora", hue: "oklch(0.88 0.22 130)" },
+  { id: "2", trigger: "/sla", title: "SLA padrão", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis.", category: "Suporte", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 210)" },
+  { id: "3", trigger: "/ack", title: "Acknowledge", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update.", category: "Resposta", uses: 0, updated: "agora", hue: "oklch(0.78 0.16 320)" },
+  { id: "4", trigger: "/sig", title: "Assinatura padrão", body: "Atenciosamente,\nEquipe de Operações N2", category: "Email", uses: 0, updated: "agora", hue: "oklch(0.80 0.14 60)" },
+  { id: "5", trigger: "/inc", title: "Incidente template", body: "Incidente {{ticket}} aberto em {{saudacao}}.\nSeveridade: \nResponsável: {{clientuser}}", category: "Variável", uses: 0, updated: "agora", hue: "oklch(0.72 0.18 25)" },
+  { id: "6", trigger: "/rca", title: "Root cause analysis", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção.", category: "Postmortem", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 280)" },
+];
+
+function buildContextMenus(snippets) {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "snaptext-root",
+      title: "SnapText — Inserir snippet",
+      contexts: ["editable"],
+    });
+    snippets.forEach((s) => {
+      chrome.contextMenus.create({
+        id: `snaptext-snippet-${s.id}`,
+        parentId: "snaptext-root",
+        title: `${s.trigger}  —  ${s.title}`,
+        contexts: ["editable"],
+      });
+    });
+    chrome.contextMenus.create({
+      id: "snaptext-separator",
+      parentId: "snaptext-root",
+      type: "separator",
+      contexts: ["editable"],
+    });
+    chrome.contextMenus.create({
+      id: "snaptext-dashboard",
+      parentId: "snaptext-root",
+      title: "⚙ Gerenciar snippets…",
+      contexts: ["editable"],
+    });
+  });
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(["snippets"], (res) => {
-    if (!res.snippets) {
-      chrome.storage.local.set({
-        snippets: [
-          { id: "1", trigger: "/vm", title: "Restart VM", body: "Realizado restart da VM, serviço normalizado sem impacto adicional.", category: "Ops", uses: 0, updated: "agora", hue: "oklch(0.88 0.22 130)" },
-          { id: "2", trigger: "/sla", title: "SLA padrão", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis.", category: "Suporte", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 210)" },
-          { id: "3", trigger: "/ack", title: "Acknowledge", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update.", category: "Resposta", uses: 0, updated: "agora", hue: "oklch(0.78 0.16 320)" },
-          { id: "4", trigger: "/sig", title: "Assinatura padrão", body: "Atenciosamente,\nEquipe de Operações N2", category: "Email", uses: 0, updated: "agora", hue: "oklch(0.80 0.14 60)" },
-          { id: "5", trigger: "/inc", title: "Incidente template", body: "Incidente {{ticket}} aberto em {{date}}.\nSeveridade: {{sev}}\nResponsável: {{user}}", category: "Variável", uses: 0, updated: "agora", hue: "oklch(0.72 0.18 25)" },
-          { id: "6", trigger: "/rca", title: "Root cause analysis", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção.", category: "Postmortem", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 280)" },
-        ],
-      });
-    }
+    const snippets = res.snippets && res.snippets.length ? res.snippets : DEFAULT_SNIPPETS_BG;
+    if (!res.snippets) chrome.storage.local.set({ snippets });
+    buildContextMenus(snippets);
   });
 });
 
+// Rebuild menus whenever snippets change
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.snippets) {
+    buildContextMenus(changes.snippets.newValue || []);
+  }
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "snaptext-dashboard") {
+    chrome.runtime.openOptionsPage();
+    return;
+  }
+  if (!String(info.menuItemId).startsWith("snaptext-snippet-")) return;
+
+  const snippetId = String(info.menuItemId).replace("snaptext-snippet-", "");
+  chrome.storage.local.get(["snippets"], (res) => {
+    const snippets = res.snippets || DEFAULT_SNIPPETS_BG;
+    const s = snippets.find((x) => x.id === snippetId);
+    if (!s || !tab) return;
+
+    // Track use via unified handler
+    chrome.runtime.sendMessage({ type: "TRACK_USE", id: s.id, trigger: s.trigger });
+
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      world: "MAIN",
+      args: [s.body],
+      func: (text) => {
+        const el = document.activeElement;
+        if (!el) return;
+        // Standard editable elements
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+          const start = el.selectionStart;
+          el.value = el.value.slice(0, start) + text + el.value.slice(el.selectionEnd);
+          el.selectionStart = el.selectionEnd = start + text.length;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+        // contenteditable
+        if (el.isContentEditable) {
+          document.execCommand("insertText", false, text);
+        }
+      },
+    });
+  });
+});
+
+
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // ── Track snippet usage (fired from any context: content, popup, context menu) ──
+  if (msg.type === "TRACK_USE") {
+    chrome.storage.local.get(["snippets"], (res) => {
+      const snippets = res.snippets || [];
+      const idx = snippets.findIndex((s) => s.id === msg.id || s.trigger === msg.trigger);
+      if (idx >= 0) {
+        snippets[idx].uses = (snippets[idx].uses || 0) + 1;
+        snippets[idx].updated = new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        chrome.storage.local.set({ snippets });
+      }
+    });
+    sendResponse({ ok: true });
+    return;
+  }
+
   if (msg.type !== "FETCH_SN_CASE_CONTEXT") return;
 
   const tabId = sender.tab?.id;
