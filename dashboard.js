@@ -1,15 +1,8 @@
 // SnapText Dashboard
-const DEFAULT_SNIPPETS = [
-  { id: "1", trigger: "/vm", title: "Restart VM", body: "Realizado restart da VM, serviço normalizado sem impacto adicional.", category: "Ops", uses: 0, updated: "agora", hue: "oklch(0.88 0.22 130)" },
-  { id: "2", trigger: "/sla", title: "SLA padrão", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis.", category: "Suporte", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 210)" },
-  { id: "3", trigger: "/ack", title: "Acknowledge", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update.", category: "Resposta", uses: 0, updated: "agora", hue: "oklch(0.78 0.16 320)" },
-  { id: "4", trigger: "/sig", title: "Assinatura padrão", body: "Atenciosamente,\nEquipe de Operações N2", category: "Email", uses: 0, updated: "agora", hue: "oklch(0.80 0.14 60)" },
-  { id: "5", trigger: "/inc", title: "Incidente template", body: "Incidente {{ticket}} aberto em {{saudacao}}.\nSeveridade: \nResponsável: {{clientuser}}", category: "Variável", uses: 0, updated: "agora", hue: "oklch(0.72 0.18 25)" },
-  { id: "6", trigger: "/rca", title: "Root cause analysis", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção.", category: "Postmortem", uses: 0, updated: "agora", hue: "oklch(0.78 0.14 280)" },
-];
+const DEFAULT_SNIPPETS = [];
 
 let snippets = [];
-let selectedId = "1";
+let selectedId = "";
 let activeFolder = "Todos";
 let query = "";
 
@@ -34,6 +27,26 @@ function save() {
   if (typeof chrome !== "undefined" && chrome.storage) {
     chrome.storage.local.set({ snippets });
   }
+}
+
+function syncSnippetData() {
+  const idx = snippets.findIndex((x) => x.id === selectedId);
+  if (idx < 0) return;
+
+  snippets[idx] = {
+    ...snippets[idx],
+    trigger: document.getElementById("ed-trigger").value,
+    title: document.getElementById("ed-title").value,
+    category: document.getElementById("ed-category-input").value.trim() || "Geral",
+    body: document.getElementById("ed-body").value,
+    updated: "agora",
+  };
+
+  save();
+  // Atualiza apenas os componentes visuais externos ao editor para não perder o foco/cursor
+  renderFolders();
+  renderSnippets();
+  document.getElementById("ed-breadcrumb-title").textContent = snippets[idx].title;
 }
 
 function renderAll() { renderFolders(); renderSnippets(); renderEditor(); }
@@ -135,6 +148,7 @@ function updateMeta() {
   document.getElementById("char-count").textContent = `${body.length} caracteres`;
   document.getElementById("words-saved").textContent = `~${Math.round(body.length / 5)} palavras economizadas / uso`;
   renderPreview(body);
+  syncSnippetData();
 }
 
 function renderPreview(raw) {
@@ -149,7 +163,8 @@ function renderPreview(raw) {
     .replace(/\{\{datetime\}\}/gi, `<em style="color:var(--primary)">${new Date().toLocaleString("pt-BR")}</em>`)
     .replace(/\{\{ticket\}\}/gi, '<em style="color:var(--primary)">INC0012345</em>')
     .replace(/\{\{clientuser\}\}/gi, '<em style="color:var(--primary)">João Silva</em>')
-    .replace(/\{\{user\}\}/gi, '<em style="color:var(--primary)">João Silva</em>');
+    .replace(/\{\{user\}\}/gi, '<em style="color:var(--primary)">João Silva</em>')
+    .replace(/\{\{clipboard\}\}/gi, '<em style="color:var(--primary)" title="Conteúdo do clipboard no momento da inserção">📋 clipboard</em>');
   // Convert newlines to <br> for plain text parts
   html = html.replace(/\n/g, "<br>");
   document.getElementById("preview-body").innerHTML = html;
@@ -217,21 +232,14 @@ document.querySelector(".fmt-color-wrap").addEventListener("click", () => {
 
 searchEl.addEventListener("input", (e) => { query = e.target.value; renderSnippets(); });
 
+// Listeners para salvamento automático nos campos de texto
+["ed-trigger", "ed-title", "ed-category-input"].forEach(id => {
+  document.getElementById(id).addEventListener("input", syncSnippetData);
+});
+
 document.getElementById("btn-save").addEventListener("click", () => {
-  const idx = snippets.findIndex((x) => x.id === selectedId);
-  if (idx >= 0) {
-    let trigger = document.getElementById("ed-trigger").value.trim();
-    snippets[idx] = {
-      ...snippets[idx],
-      trigger,
-      title: document.getElementById("ed-title").value,
-      category: document.getElementById("ed-category-input").value.trim() || "Geral",
-      body: document.getElementById("ed-body").value,
-      updated: "agora",
-    };
-    save();
-    renderAll();
-  }
+  syncSnippetData();
+  renderAll(); // Re-renderiza tudo no clique manual por garantia
 });
 
 document.getElementById("btn-delete").addEventListener("click", () => {

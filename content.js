@@ -1,13 +1,6 @@
 // SnapText content script — listens for messages and expands /atalhos in real time.
 
-const DEFAULT_SNIPPETS = [
-  { trigger: "/vm", body: "Realizado restart da VM, serviço normalizado sem impacto adicional." },
-  { trigger: "/sla", body: "Conforme SLA acordado, prazo de atendimento de até 4 horas úteis." },
-  { trigger: "/ack", body: "Recebido. Iniciando análise, retorno em até 30 minutos com update." },
-  { trigger: "/sig", body: "Atenciosamente,\nEquipe de Operações N2" },
-  { trigger: "/inc", body: "Incidente {{ticket}} aberto em {{datetime}}.\nSeveridade: \nResponsável: {{clientuser}}" },
-  { trigger: "/rca", body: "Root cause: configuração incorreta.\nAção: rollback aplicado e validado em produção." },
-];
+const DEFAULT_SNIPPETS = [];
 
 let snippetsCache = DEFAULT_SNIPPETS;
 
@@ -97,6 +90,12 @@ async function resolveVars(text) {
   const onServiceNow = isServiceNowPage();
   let ticketValue = onServiceNow ? "{{ticket}}" : "INC" + Math.floor(Math.random() * 900000 + 100000);
   let userValue = onServiceNow ? "{{user}}" : "Você";
+
+  // {{clipboard}} — resolve antes de tudo, com fallback silencioso
+  if (/\{\{clipboard\}\}/i.test(text)) {
+    const clip = await navigator.clipboard.readText().catch(() => "");
+    text = text.replace(/\{\{clipboard\}\}/gi, clip);
+  }
 
   if (/\{\{ticket\}\}|\{\{clientuser\}\}|\{\{user\}\}/.test(text)) {
     const caseData = await getServiceNowCaseData();
